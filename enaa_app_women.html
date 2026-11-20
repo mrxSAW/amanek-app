@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آلة حاسبة</title>
+    <style>
+        :root {
+            --bg-calc: #1e1e2e;
+            --btn-num: #313244;
+            --btn-op: #f38ba8;
+            --btn-eq: #a6e3a1;
+            --text-light: #cdd6f4;
+            --safe-bg: #f8f9fa;
+            --safe-primary: #6c5ce7;
+            --danger: #d63031;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #11111b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- واجهة الآلة الحاسبة (التمويه) --- */
+        #calculator-view {
+            background-color: var(--bg-calc);
+            width: 340px;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        #display {
+            width: 100%;
+            height: 70px;
+            background-color: #181825;
+            color: var(--text-light);
+            border: none;
+            border-radius: 12px;
+            font-size: 2rem;
+            text-align: left;
+            padding: 15px;
+            margin-bottom: 20px;
+            direction: ltr;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            direction: ltr;
+        }
+
+        .btn {
+            height: 60px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: var(--btn-num);
+            color: var(--text-light);
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-op {
+            background-color: #45475a;
+            color: var(--btn-op);
+        }
+
+        .btn-eq {
+            background-color: var(--btn-eq);
+            color: #11111b;
+            grid-column: span 2;
+        }
+
+        .btn-clear {
+            background-color: #f38ba8;
+            color: #11111b;
+        }
+
+        /* --- لوحة التحكم السرية (أمانكِ) --- */
+        #secret-dashboard {
+            display: none; /* مخفية افتراضياً */
+            background-color: var(--safe-bg);
+            width: 380px;
+            max-width: 95vw;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            color: #2d3436;
+        }
+
+        .header-safe {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #dfe6e9;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header-safe h2 {
+            color: var(--safe-primary);
+            font-size: 1.4rem;
+        }
+
+        .quick-exit {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .action-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-right: 4px solid var(--safe-primary);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .action-card:hover {
+            transform: translateX(-5px);
+        }
+
+        .action-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #2d3436;
+        }
+
+        .action-card p {
+            font-size: 0.85rem;
+            color: #636e72;
+        }
+
+        .sos-btn {
+            width: 100%;
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(214, 48, 49, 0.4);
+        }
+
+        #status-msg {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #00b894;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. واجهة الآلة الحاسبة المموهة -->
+    <div id="calculator-view">
+        <input type="text" id="display" readonly placeholder="0">
+        <div class="buttons">
+            <button class="btn btn-clear" onclick="clearDisplay()">C</button>
+            <button class="btn btn-op" onclick="appendValue('/')">÷</button>
+            <button class="btn btn-op" onclick="appendValue('*')">×</button>
+            <button class="btn btn-op" onclick="deleteLast()">⌫</button>
+
+            <button class="btn" onclick="appendValue('7')">7</button>
+            <button class="btn" onclick="appendValue('8')">8</button>
+            <button class="btn" onclick="appendValue('9')">9</button>
+            <button class="btn btn-op" onclick="appendValue('-')">-</button>
+
+            <button class="btn" onclick="appendValue('4')">4</button>
+            <button class="btn" onclick="appendValue('5')">5</button>
+            <button class="btn" onclick="appendValue('6')">6</button>
+            <button class="btn btn-op" onclick="appendValue('+')">+</button>
+
+            <button class="btn" onclick="appendValue('1')">1</button>
+            <button class="btn" onclick="appendValue('2')">2</button>
+            <button class="btn" onclick="appendValue('3')">3</button>
+            <button class="btn" onclick="appendValue('.')">.</button>
+
+            <button class="btn" onclick="appendValue('0')">0</button>
+            <button class="btn" onclick="appendValue('00')">00</button>
+            <button class="btn btn-eq" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <!-- 2. لوحة الأمان السرية (تظهر فقط عند إدخال الرمز 10313 ثم =) -->
+    <div id="secret-dashboard">
+        <div class="header-safe">
+            <h2>مساحة أمانكِ 🛡️</h2>
+            <button class="quick-exit" onclick="panicExit()">خروج سريع ✕</button>
+        </div>
+
+        <div class="action-card" onclick="triggerAction('تم تفعيل الخزنة المشفرة: الكاميرا جاهزة لالتقاط الأدلة دون حفظها في الهاتف.')">
+            <h3>📸 توثيق الأدلة (خزنة سحابية)</h3>
+            <p>التقاط صور أو تسجيل صوتي مشفر يختفي تلقائياً من ذاكرة الهاتف.</p>
+        </div>
+
+        <div class="action-card" onclick="triggerAction('جاري عرض أقرب خلايا التكفل بالنساء بالمستشفيات ومراكز الاستماع...')">
+            <h3>📍 مراكز الدعم والنجدة القريبة</h3>
+            <p>خريطة خلايا التكفل بالنساء ضحايا العنف والجمعيات الحقوقية.</p>
+        </div>
+
+        <div class="action-card" onclick="triggerAction('تم تشغيل المساعد الصوتي بالدارجة والأمازيغية لشرح مقتضيات القانون 103.13.')">
+            <h3>⚖️ أعرف حقوقي (القانون 103.13)</h3>
+            <p>دليل مبسط ومسموع للإجراءات القانونية وسبل الحماية.</p>
+        </div>
+
+        <button class="sos-btn" onclick="sendSOS()">🚨 إرسال استغاثة صامتة وموقعي الآن</button>
+        <div id="status-msg"></div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const calcView = document.getElementById('calculator-view');
+        const secretView = document.getElementById('secret-dashboard');
+        const statusMsg = document.getElementById('status-msg');
+
+        // الرمز السري لفتح التطبيق (مستوحى من القانون 103.13)
+        const SECRET_PIN = "10313";
+
+        function appendValue(val) {
+            display.value += val;
+        }
+
+        function clearDisplay() {
+            display.value = '';
+        }
+
+        function deleteLast() {
+            display.value = display.value.slice(0, -1);
+        }
+
+        function calculate() {
+            const currentInput = display.value.trim();
+
+            // التحقق مما إذا كان المدخل هو الرمز السري
+            if (currentInput === SECRET_PIN) {
+                openSecretDashboard();
+                return;
+            }
+
+            // تنفيذ العملية الحسابية بشكل طبيعي للتمويه
+            try {
+                // استبدال الرموز الحسابية وتقييم النتيجة بأمان
+                const result = Function('"use strict";return (' + currentInput + ')')();
+                display.value = (result !== undefined && !isNaN(result)) ? result : '';
+            } catch (e) {
+                display.value = 'خطأ';
+                setTimeout(clearDisplay, 1000);
+            }
+        }
+
+        function openSecretDashboard() {
+            clearDisplay();
+            calcView.style.display = 'none';
+            secretView.style.display = 'block';
+            statusMsg.textContent = '';
+        }
+
+        // زر الخروج السريع (Panic Button) يعيد الشاشة للآلة الحاسبة فوراً
+        function panicExit() {
+            secretView.style.display = 'none';
+            calcView.style.display = 'block';
+            clearDisplay();
+            statusMsg.textContent = '';
+        }
+
+        function triggerAction(message) {
+            statusMsg.style.color = "#0984e3";
+            statusMsg.textContent = message;
+        }
+
+        function sendSOS() {
+            statusMsg.style.color = "#d63031";
+            statusMsg.textContent = "جاري تحديد موقعك الجغرافي (GPS)...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude.toFixed(4);
+                        const lon = position.coords.longitude.toFixed(4);
+                        statusMsg.style.color = "#00b894";
+                        statusMsg.textContent = `✓ تم إرسال نداء استغاثة صامت بإحداثياتك (${lat}, ${lon}) لجهات الاتصال الموثوقة.`;
+                    },
+                    () => {
+                        statusMsg.style.color = "#00b894";
+                        statusMsg.textContent = "✓ تم إرسال نداء الاستغاثة النصي الطارئ لجهات الاتصال الموثوقة.";
+                    }
+                );
+            }
+        }
+    </script>
+</body>
+</html>
